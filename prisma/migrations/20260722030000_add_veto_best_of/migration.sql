@@ -1,0 +1,1 @@
+ALTER TABLE "veto_sessions" ADD COLUMN "best_of" INTEGER NOT NULL DEFAULT 3;

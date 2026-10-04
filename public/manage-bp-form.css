@@ -1,0 +1,22 @@
+.bp-form{display:grid;gap:18px;min-width:0}
+.bp-form-section{min-width:0;padding:18px;border:1px solid #ffffff18;border-radius:14px;background:#08101899}
+.bp-form-section__head{display:flex;align-items:flex-start;gap:12px;margin-bottom:15px}
+.bp-form-section__index{display:grid;place-items:center;flex:0 0 28px;height:28px;border-radius:8px;background:#ff46551c;color:#ff6571;font:11px Replica,Arial;border:1px solid #ff465542}
+.bp-form-section__head h3{margin:0 0 4px;font-size:17px}
+.bp-form-section__head p{margin:0;font-size:12px;color:#91a0ab;line-height:1.5}
+.bp-basic-grid,.bp-team-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.bp-form label{display:grid;align-content:start;gap:7px;min-width:0;font-weight:700}
+.bp-form label small{font-weight:400;line-height:1.5}
+.bp-team-card{display:grid;grid-template-columns:minmax(0,1fr) 126px;gap:16px;min-width:0;padding:16px;border:1px solid #ffffff16;border-radius:12px;background:linear-gradient(145deg,#111d27cc,#080e14cc)}
+.bp-team-card__fields{display:grid;align-content:start;gap:13px;min-width:0}
+.bp-logo-preview{position:relative;align-self:stretch;display:grid;place-items:center;min-width:0;min-height:156px;border:1px dashed #ffffff2d;border-radius:12px;overflow:hidden;background:#050a0f}
+.bp-logo-preview img{display:block;width:92px;height:92px;max-width:80%;object-fit:contain;filter:drop-shadow(0 8px 18px #000a)}
+.bp-logo-preview span{position:absolute;left:8px;right:8px;bottom:7px;padding:3px 5px;border-radius:6px;background:#05090dbd;color:#91a0ab;text-align:center;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bp-public-row{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:10px!important;min-height:48px;padding:12px 14px;border:1px solid #ffffff16;border-radius:10px;background:#0a1219}
+.bp-public-row input{width:18px!important;height:18px;margin:0;flex:0 0 auto;accent-color:#ff4655}
+.bp-flow-note{margin:14px 0 0;padding:13px 15px;border-left:3px solid #ff4655;border-radius:0 9px 9px 0;background:#ff46550b;color:#a9b4bc;line-height:1.65;font-size:13px}
+.form-grid>*,.cards>*,.entity,.panel,.panel-head>*,.dash-head>*{min-width:0}
+.entity h3,.panel-head h3{overflow-wrap:anywhere}.entity-actions>*{max-width:100%;white-space:normal}
+.dialog{max-width:calc(100vw - 16px);overflow-x:hidden}.dialog img{max-width:100%}
+@media(max-width:760px){.bp-basic-grid,.bp-team-grid{grid-template-columns:1fr}.bp-team-card{grid-template-columns:minmax(0,1fr) 108px}.bp-form-section{padding:14px}.bp-logo-preview{min-height:140px}}
+@media(max-width:480px){.bp-team-card{grid-template-columns:1fr}.bp-logo-preview{min-height:125px}.bp-logo-preview img{width:78px;height:78px}.bp-form-section__head{gap:9px}.bp-form-section__index{flex-basis:25px;height:25px}}

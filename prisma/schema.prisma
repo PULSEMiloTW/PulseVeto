@@ -1,0 +1,469 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum VetoStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  PAUSED
+  WAITING_FOR_TEAMS
+  WAITING_FOR_SIDE_SELECTION
+  WAITING_FOR_RANDOM_CONFIRMATION
+  COMPLETED
+  CANCELLED
+}
+
+enum TeamRole {
+  TEAM_A
+  TEAM_B
+}
+
+enum StepActor {
+  TEAM_A
+  TEAM_B
+  SYSTEM
+}
+
+enum StepAction {
+  BAN
+  PICK
+  DECIDER
+}
+
+enum SideSelectionMode {
+  OPPONENT_SELECTS
+  PICKING_TEAM_SELECTS
+  PREASSIGNED
+  ADMIN_SELECTS
+  COIN_TOSS
+  RANDOM
+  NONE
+}
+
+enum Side {
+  ATTACK
+  DEFENSE
+}
+
+enum TokenType {
+  OVERLAY
+  RESULT
+}
+
+model AdminUser {
+  id                  String         @id @default(cuid())
+  username            String         @unique
+  passwordHash        String         @map("password_hash")
+  totpSecretEncrypted String?        @map("totp_secret_encrypted")
+  disabledAt          DateTime?      @map("disabled_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+  sessions            AdminSession[]
+
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id          String    @id
+  adminUserId String    @map("admin_user_id")
+  tokenHash   String    @unique @map("token_hash")
+  csrfHash    String    @map("csrf_hash")
+  expiresAt   DateTime  @map("expires_at")
+  revokedAt   DateTime? @map("revoked_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  admin       AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@map("admin_sessions")
+}
+
+model Organization {
+  id          String                  @id @default(cuid())
+  name        String
+  iconPath    String                  @default("/branding/PulseVeto_Favicon.png") @map("icon_path")
+  description String?
+  status      OrganizationStatus      @default(ACTIVE)
+  expiresAt   DateTime?               @map("expires_at")
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+  deletedAt   DateTime?               @map("deleted_at")
+  purgeAt     DateTime?               @map("purge_at")
+  statusBeforeDelete String?          @map("status_before_delete")
+  keys        OrganizationAccessKey[]
+  sessions    OrganizationSession[]
+  events      Event[]
+  discordMembers OrganizationDiscordMember[]
+
+  @@index([deletedAt, purgeAt])
+  @@map("organizations")
+}
+
+model OrganizationDiscordMember {
+  id            String       @id @default(cuid())
+  organizationId String      @map("organization_id")
+  discordUserId String       @map("discord_user_id")
+  username      String?
+  avatarUrl     String?      @map("avatar_url")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([discordUserId])
+  @@unique([organizationId, discordUserId])
+  @@map("organization_discord_members")
+}
+
+model DiscordAccount {
+  discordUserId String   @id @map("discord_user_id")
+  username      String
+  avatarUrl     String?  @map("avatar_url")
+  firstLoginAt  DateTime @default(now()) @map("first_login_at")
+  lastLoginAt   DateTime @default(now()) @map("last_login_at")
+  loginCount    Int      @default(1) @map("login_count")
+
+  @@index([lastLoginAt])
+  @@map("discord_accounts")
+}
+
+model OrganizationAccessKey {
+  id                 String       @id @default(cuid())
+  organizationId     String       @map("organization_id")
+  lookupHash         String       @unique @map("lookup_hash")
+  verificationHash   String       @map("verification_hash")
+  encryptedKey       String       @map("encrypted_key")
+  lastFour           String       @map("last_four")
+  expiresAt          DateTime     @map("expires_at")
+  revokedAt          DateTime?    @map("revoked_at")
+  lastUsedAt         DateTime?    @map("last_used_at")
+  failedAttemptCount Int          @default(0) @map("failed_attempt_count")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_access_keys")
+}
+
+model OrganizationSession {
+  id             String       @id
+  organizationId String       @map("organization_id")
+  tokenHash      String       @unique @map("token_hash")
+  csrfHash       String       @map("csrf_hash")
+  expiresAt      DateTime     @map("expires_at")
+  revokedAt      DateTime?    @map("revoked_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_sessions")
+}
+
+model Event {
+  id                   String        @id @default(cuid())
+  organizationId       String        @map("organization_id")
+  name                 String
+  logoPath             String?       @map("logo_path")
+  logoUrl              String?       @map("logo_url")
+  description          String?
+  startsAt             DateTime?     @map("starts_at")
+  endsAt               DateTime?     @map("ends_at")
+  themeColor           String        @default("#ff4655") @map("theme_color")
+  defaultKeyTtlMinutes Int           @default(1440) @map("default_key_ttl_minutes")
+  publicSharingEnabled Boolean       @default(false) @map("public_sharing_enabled")
+  status               EventStatus   @default(DRAFT)
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+  deletedAt            DateTime?     @map("deleted_at")
+  purgeAt              DateTime?     @map("purge_at")
+  statusBeforeDelete   String?       @map("status_before_delete")
+  organization         Organization  @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  maps                 EventMap[]
+  vetoSessions         VetoSession[]
+  vetoFlows            EventVetoFlow[]
+
+  @@index([organizationId])
+  @@index([deletedAt, purgeAt])
+  @@map("events")
+}
+
+model EventVetoFlow {
+  id        String   @id @default(cuid())
+  eventId   String   @map("event_id")
+  name      String
+  stepsJson String   @map("steps_json")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, name])
+  @@map("event_veto_flows")
+}
+
+model ReleaseNote {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  body      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("release_notes")
+}
+
+model Map {
+  id             String             @id
+  nameEn         String             @map("name_en")
+  nameZhTw       String             @map("name_zh_tw")
+  nameZhCn       String             @default("") @map("name_zh_cn")
+  splashUrl      String?            @map("splash_url")
+  localImagePath String?            @map("local_image_path")
+  enabled        Boolean            @default(true)
+  official       Boolean            @default(true)
+  lastSyncedAt   DateTime?          @map("last_synced_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  events         EventMap[]
+  actions        VetoAction[]
+  selections     MapSideSelection[]
+
+  @@map("maps")
+}
+
+model EventMap {
+  eventId   String @map("event_id")
+  mapId     String @map("map_id")
+  sortOrder Int    @map("sort_order")
+  event     Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  map       Map    @relation(fields: [mapId], references: [id], onDelete: Restrict)
+
+  @@id([eventId, mapId])
+  @@unique([eventId, sortOrder])
+  @@map("event_maps")
+}
+
+model VetoSession {
+  id                   String             @id @default(cuid())
+  eventId              String             @map("event_id")
+  name                 String
+  teamAName            String             @map("team_a_name")
+  teamALogo            String?            @map("team_a_logo")
+  teamBName            String             @map("team_b_name")
+  teamBLogo            String?            @map("team_b_logo")
+  opensAt              DateTime?          @map("opens_at")
+  startsAt             DateTime?          @map("starts_at")
+  completedAt          DateTime?          @map("completed_at")
+  archivedAt           DateTime?          @map("archived_at")
+  deletedAt            DateTime?          @map("deleted_at")
+  purgeAt              DateTime?          @map("purge_at")
+  statusBeforeDelete   String?            @map("status_before_delete")
+  status               VetoStatus         @default(DRAFT)
+  currentStep          Int                @default(0) @map("current_step")
+  version              Int                @default(0)
+  bestOf               Int                @default(3) @map("best_of")
+  flowName             String?            @map("flow_name")
+  overlayTheme         String             @default("vct-tc") @map("overlay_theme")
+  publicSharingEnabled Boolean            @default(false) @map("public_sharing_enabled")
+  coinTossWinner       TeamRole?          @map("coin_toss_winner")
+  coinTossAt           DateTime?          @map("coin_toss_at")
+  mapSelectionSeconds  Int                @default(-1) @map("map_selection_seconds")
+  sideSelectionSeconds Int                @default(-1) @map("side_selection_seconds")
+  actionDeadlineAt     DateTime?          @map("action_deadline_at")
+  teamAReadyAt         DateTime?          @map("team_a_ready_at")
+  teamBReadyAt         DateTime?          @map("team_b_ready_at")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  event                Event              @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  steps                VetoStep[]
+  actions              VetoAction[]
+  sideSelections       MapSideSelection[]
+  randomConfirmations  RandomConfirmation[]
+  mapResults           MapResult[]
+  teamKeys             TeamAccessKey[]
+  teamSessions         TeamSession[]
+  publicTokens         PublicToken[]
+
+  @@index([eventId, status])
+  @@index([deletedAt, purgeAt])
+  @@map("veto_sessions")
+}
+
+model TeamSession {
+  id            String      @id
+  vetoSessionId String      @map("veto_session_id")
+  team          TeamRole
+  tokenHash     String      @unique @map("token_hash")
+  csrfHash      String      @map("csrf_hash")
+  expiresAt     DateTime    @map("expires_at")
+  revokedAt     DateTime?   @map("revoked_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  welcomeRequired Boolean   @default(false) @map("welcome_required")
+  vetoSession   VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+
+  @@index([vetoSessionId, team])
+  @@map("team_sessions")
+}
+
+model VetoStep {
+  id                String            @id @default(cuid())
+  vetoSessionId     String            @map("veto_session_id")
+  stepNumber        Int               @map("step_number")
+  actor             StepActor
+  action            StepAction
+  resultOrder       Int?              @map("result_order")
+  customLabel       String?           @map("custom_label")
+  sideSelectionMode SideSelectionMode @default(NONE) @map("side_selection_mode")
+  sideSelector      TeamRole?         @map("side_selector")
+  preassignedSide   Side?             @map("preassigned_side")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  vetoSession       VetoSession       @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+  actionRecord      VetoAction?
+
+  @@unique([vetoSessionId, stepNumber])
+  @@map("veto_steps")
+}
+
+model VetoAction {
+  id            String            @id @default(cuid())
+  vetoSessionId String            @map("veto_session_id")
+  vetoStepId    String            @unique @map("veto_step_id")
+  mapId         String            @map("map_id")
+  actor         StepActor
+  action        StepAction
+  timeoutRandom Boolean           @default(false) @map("timeout_random")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  vetoSession   VetoSession       @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+  step          VetoStep          @relation(fields: [vetoStepId], references: [id], onDelete: Restrict)
+  map           Map               @relation(fields: [mapId], references: [id], onDelete: Restrict)
+  sideSelection MapSideSelection?
+  randomConfirmation RandomConfirmation?
+  result        MapResult?
+
+  @@unique([vetoSessionId, mapId])
+  @@map("veto_actions")
+}
+
+model RandomConfirmation {
+  id               String      @id @default(cuid())
+  vetoSessionId    String      @map("veto_session_id")
+  vetoActionId     String      @unique @map("veto_action_id")
+  teamAConfirmedAt DateTime?   @map("team_a_confirmed_at")
+  teamBConfirmedAt DateTime?   @map("team_b_confirmed_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  vetoSession      VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+  action           VetoAction  @relation(fields: [vetoActionId], references: [id], onDelete: Cascade)
+
+  @@index([vetoSessionId])
+  @@map("random_confirmations")
+}
+
+model MapResult {
+  id            String      @id @default(cuid())
+  vetoSessionId String      @map("veto_session_id")
+  vetoActionId  String      @unique @map("veto_action_id")
+  teamAScore    Int         @default(0) @map("team_a_score")
+  teamBScore    Int         @default(0) @map("team_b_score")
+  winner        TeamRole?
+  isNextMap     Boolean     @default(false) @map("is_next_map")
+  completedAt   DateTime?   @map("completed_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  vetoSession   VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+  action        VetoAction  @relation(fields: [vetoActionId], references: [id], onDelete: Restrict)
+
+  @@index([vetoSessionId])
+  @@map("map_results")
+}
+
+model MapSideSelection {
+  id              String      @id @default(cuid())
+  vetoSessionId   String      @map("veto_session_id")
+  vetoActionId    String      @unique @map("veto_action_id")
+  mapId           String      @map("map_id")
+  selector        TeamRole
+  selectorSide    Side        @map("selector_side")
+  opponentSide    Side        @map("opponent_side")
+  isAdminOverride Boolean     @default(false) @map("is_admin_override")
+  overrideReason  String?     @map("override_reason")
+  isDecider       Boolean     @default(false) @map("is_decider")
+  fromCoinToss    Boolean     @default(false) @map("from_coin_toss")
+  selectedAt      DateTime    @default(now()) @map("selected_at")
+  vetoSession     VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+  action          VetoAction  @relation(fields: [vetoActionId], references: [id], onDelete: Restrict)
+  map             Map         @relation(fields: [mapId], references: [id], onDelete: Restrict)
+
+  @@map("map_side_selections")
+}
+
+model TeamAccessKey {
+  id                 String      @id @default(cuid())
+  vetoSessionId      String      @map("veto_session_id")
+  team               TeamRole
+  lookupHash         String      @unique @map("lookup_hash")
+  verificationHash   String      @map("verification_hash")
+  encryptedKey       String      @map("encrypted_key")
+  lastFour           String      @map("last_four")
+  expiresAt          DateTime    @map("expires_at")
+  revokedAt          DateTime?   @map("revoked_at")
+  lastUsedAt         DateTime?   @map("last_used_at")
+  failedAttemptCount Int         @default(0) @map("failed_attempt_count")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  vetoSession        VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+
+  @@index([vetoSessionId, team])
+  @@map("team_access_keys")
+}
+
+model PublicToken {
+  id            String      @id @default(cuid())
+  vetoSessionId String      @map("veto_session_id")
+  type          TokenType
+  tokenHash     String      @unique @map("token_hash")
+  encryptedToken String?    @map("encrypted_token")
+  lastFour      String      @map("last_four")
+  revokedAt     DateTime?   @map("revoked_at")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  vetoSession   VetoSession @relation(fields: [vetoSessionId], references: [id], onDelete: Cascade)
+
+  @@index([vetoSessionId, type])
+  @@map("public_tokens")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String?  @map("organization_id")
+  eventId        String?  @map("event_id")
+  vetoSessionId  String?  @map("veto_session_id")
+  actorType      String   @map("actor_type")
+  actorId        String?  @map("actor_id")
+  action         String
+  entityType     String?  @map("entity_type")
+  entityId       String?  @map("entity_id")
+  ipMasked       String?  @map("ip_masked")
+  detailsJson    String?  @map("details_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([vetoSessionId, createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  key       String   @id
+  valueJson String   @map("value_json")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}

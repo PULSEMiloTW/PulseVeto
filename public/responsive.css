@@ -1,0 +1,12 @@
+@import url('/modern.css');
+.pulse-logo{width:min(420px,78vw)!important;height:auto!important;max-height:150px;filter:drop-shadow(0 10px 30px #ff465533)!important}
+.secret-line{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.secret-entry{margin:14px 0}.secret-line .secret-box{margin:0;overflow-wrap:anywhere}
+@media(max-width:700px){
+  .shell{width:min(100% - 24px,1180px)}.login{padding:28px 12px}.login h1{font-size:clamp(28px,9vw,44px);line-height:1.16}.pulse-logo{width:min(330px,82vw)!important}
+  .topbar{align-items:flex-start;gap:10px;flex-direction:column}.topbar strong{font-size:16px}.match{gap:12px;margin:22px 0}.team{font-size:19px}.team img{width:58px;height:58px}
+  .step-banner{font-size:18px;padding:18px}.map-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.map{min-height:176px}.map img{height:112px}.map div{padding:10px}.side-actions{position:sticky;bottom:8px;z-index:4;flex-direction:column;background:#0f1923ee;padding:8px}
+  .timeline-row{grid-template-columns:30px 82px minmax(0,1fr);font-size:14px;padding:10px 8px}.timeline-row>*:last-child{grid-column:2/-1}.result-card{grid-template-columns:36px minmax(0,1fr);padding:14px}.result-card>*:last-child{grid-column:2}
+  .dashboard{width:100%;padding:0 12px 42px}.dash-head{padding:18px 0}.dash-nav{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.dash-nav button{min-height:44px}.panel{padding:14px;margin:12px 0}.panel-head{align-items:flex-start;flex-direction:column}.cards{grid-template-columns:1fr}.entity{padding:14px}.entity-actions{display:grid;grid-template-columns:1fr}.small-btn{min-height:42px}.form-grid{grid-template-columns:1fr}.map-select-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:48vh}
+  .modal{padding:8px}.dialog{width:100%!important;max-height:96vh!important;padding:18px}.dialog-actions{flex-wrap:wrap}.dialog-actions .btn{flex:1}.secret-line{grid-template-columns:1fr}.secret-line button{width:100%}.key-input{font-size:18px;letter-spacing:.08em}
+}
+@media(max-width:390px){.map-grid,.map-select-grid{grid-template-columns:1fr}.dash-nav{grid-template-columns:1fr}}

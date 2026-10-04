@@ -1,0 +1,2 @@
+import 'dotenv/config';import fs from 'node:fs/promises';import path from 'node:path';import {prisma} from '../src/lib/db.js';
+const dir=path.resolve('storage/backups');await fs.mkdir(dir,{recursive:true});const stamp=new Date().toISOString().replace(/[:.]/g,'-'),target=path.join(dir,`map-veto-${stamp}.db`);await prisma.$executeRawUnsafe(`VACUUM INTO '${target.replaceAll("'","''")}'`);console.log(`Backup created: ${target}`);await prisma.$disconnect();

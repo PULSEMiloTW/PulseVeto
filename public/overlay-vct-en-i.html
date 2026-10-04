@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Team A vs Team B｜Overlay English (US) All at once</title>
+	<link rel="icon" type="image/png" href="/branding/PulseVeto_Favicon.png">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/overlay-flow-layout.js?v=20260927-1"></script>
+    <style>
+        @font-face { font-family: 'Replica-Bold'; src: url('/assets/fonts/Replica-Bold.ttf') format('truetype'); font-weight: bold; }
+        @font-face { font-family: 'FoundryGridnikW03-ExtraBold'; src: url('/assets/fonts/FoundryGridnik-ExtraBold.ttf') format('truetype'); font-weight: 800; }
+        @font-face { font-family: 'LINESeedTW-Rg'; src: url('/assets/fonts/LINESeedTW_TTF_Rg.ttf') format('truetype'); font-weight: normal; }
+        @font-face { font-family: 'Tungsten-Bold'; src: url('/assets/fonts/Tungsten-Bold.ttf') format('truetype'); font-weight: bold; }
+
+        :root { 
+            --vlr-cyan: #d4ff00; 
+            --font-header: 'Replica-Bold', sans-serif;
+            --font-mapname: 'FoundryGridnikW03-ExtraBold', sans-serif;
+            --font-main: 'LINESeedTW-Rg', sans-serif; 
+            --font-accent: 'Tungsten-Bold', sans-serif;
+            --font-team: 'FoundryGridnikW03-ExtraBold', sans-serif;
+            --font-bottom: 'Replica-Bold', sans-serif;
+            --ani: cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+
+        body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: transparent; font-family: var(--font-main); }
+        
+        .bp-wrapper { 
+            display: flex; justify-content: center; align-items: stretch; 
+            width: 1800px; height: 350px; gap: 0px; 
+            margin: 670px auto 60px auto; position: relative;
+            overflow: hidden; 
+        }
+
+        .global-wipe {
+            position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: var(--vlr-cyan); z-index: 100; pointer-events: none;
+        }
+        @keyframes globalWipeAnim {
+            0% { left: -100%; }
+            50% { left: 0%; }
+            100% { left: 100%; }
+        }
+        .bp-wrapper.run-wipe .global-wipe { animation: globalWipeAnim 1.6s var(--ani) forwards; }
+
+        .map-box { flex: 1; position: relative; display: flex; flex-direction: column; z-index: 1; }
+
+        .map-inner {
+            flex: 1; position: relative; background: #000; 
+            overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); box-sizing: border-box; 
+            display: flex; flex-direction: column;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .bp-wrapper.show-placeholders .map-inner { opacity: 1; }
+        .map-box:not(:first-child) .map-inner { border-left: none; }
+        
+        .map-placeholder {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #222; z-index: 40; opacity: 1; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        .map-placeholder img { 
+            width: 150px; height: 150px; object-fit: contain; opacity: 0; 
+            transform: scale(1.3);
+            transition: opacity 0.8s var(--ani), transform 0.8s var(--ani); 
+        }
+        .map-box.show-logo .map-placeholder img { opacity: 0.3; transform: scale(1); }
+        .map-box.run-action .map-placeholder { opacity: 0; pointer-events: none; }
+
+        .map-reveal-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; z-index: 5; overflow: hidden;
+        }
+        .map-box.run-action .map-reveal-layer { 
+            opacity: 1;
+            animation: mapComplexReveal 1.2s var(--ani) forwards;
+        }
+
+        @keyframes mapComplexReveal {
+            0% { transform: translateX(-40px) scale(1.2); opacity: 0; }
+            40% { transform: translateX(0) scale(1.2); opacity: 1; }
+            70% { transform: translateX(0) scale(1.2); opacity: 1; }
+            100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+
+        .header-tag { 
+            position: absolute; top: 0; left: 0; width: 100%;
+            height: 55px; background: #000; color: var(--vlr-cyan); 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 35; opacity: 0; transform: translateY(-55px);
+            transition: transform 0.8s var(--ani), opacity 0.6s ease; 
+            font-family: var(--font-header); text-transform: uppercase; 
+        }
+        .bp-wrapper.headers-down .header-tag { opacity: 1; transform: translateY(0); }
+
+        .map-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; filter: brightness(0.5); z-index: 0; }
+
+        .middle-content { 
+            position: absolute; top: calc(50% + 27.5px); left: 0; width: 100%; height: 100px;
+            transform: translateY(-50%); 
+            z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        .map-title { 
+            color: white; font-size: 42px; width: 100%; text-align: center; 
+            text-shadow: 0 0 20px rgba(0,0,0,1); font-family: var(--font-mapname); 
+            text-transform: uppercase; margin: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .win-info { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            opacity: 0; transition: opacity 0.4s ease; 
+        }
+        .map-box.has-winner .map-title { opacity: 0; }
+        .map-box.has-winner .win-info { opacity: 1; }
+
+        .win-logo { width: 90px; height: 90px; object-fit: contain; margin-bottom: 8px; }
+        .win-score { color: white; font-size: 36px; font-family: var(--font-mapname); }
+
+        .veto-mask { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; 
+            opacity: 0; transition: opacity 0.6s var(--ani); z-index: 60; 
+        }
+        .map-box.show-veto-mask .veto-mask { opacity: 1; }
+        
+        .veto-icon { 
+            width: 130px; height: 130px; border: 12px solid var(--vlr-cyan); border-radius: 50%; 
+            position: relative; opacity: 0; 
+            transform: translateY(27.5px);
+        }
+        .veto-icon::before { content: ""; position: absolute; top: 50%; left: -5%; width: 110%; height: 12px; background: var(--vlr-cyan); transform: translateY(-50%) rotate(45deg); }
+        .map-box.show-veto-mask .veto-icon { animation: neonFlickerPure 0.4s steps(1) forwards; animation-delay: 0.3s; }
+
+        @keyframes neonFlickerPure {
+            0% { opacity: 0; } 5% { opacity: 1; } 10% { opacity: 0; }
+            15% { opacity: 1; } 20% { opacity: 0.1; } 30% { opacity: 1; } 100% { opacity: 1; }
+        }
+
+        .pick-info-wrapper {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 55px;
+            overflow: hidden; z-index: 25; pointer-events: none;
+        }
+        .pick-wipe {
+            position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: var(--vlr-cyan); z-index: 30;
+        }
+        @keyframes pickWipeAnim {
+            0% { left: -100%; }
+            50% { left: 0%; }
+            100% { left: 100%; }
+        }
+        .map-box.show-attacker .pick-wipe { animation: pickWipeAnim 0.8s var(--ani) forwards; }
+
+        .pick-info { 
+            width: 100%; height: 100%; background: var(--vlr-cyan); color: #000; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            z-index: 25; text-transform: uppercase; 
+            clip-path: inset(0 100% 0 0);
+            transition: clip-path 0s linear 0.4s;
+        }
+        .map-box.show-attacker .pick-info { clip-path: inset(0 0 0 0); }
+        .map-box.is-veto .pick-info-wrapper { display: none !important; }
+        .map-box.has-winner .pick-info-wrapper { opacity: 0; transition: opacity 0.3s ease; }
+        
+        .pick-row-top { font-family: var(--font-bottom); font-size: 14px; font-weight: bold; letter-spacing: 0.5px; margin: 0; line-height: 1.2; }
+        .pick-row-bottom { font-family: var(--font-bottom); font-size: 14px; font-weight: bold; letter-spacing: 0.8px; margin: 0; line-height: 1.2; }
+
+        .next-map-tag {
+            position: absolute; top: 55px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: var(--vlr-cyan); color: #000; padding: 4px 20px;
+            font-family: var(--font-header); font-size: 13px; font-weight: 800;
+            z-index: 70; opacity: 0; text-transform: uppercase; 
+            transition: transform 0.8s var(--ani), opacity 0.5s ease;
+            display: none;
+        }
+        .map-box.is-next .next-map-tag { display: block; }
+        .map-box.reveal-final .next-map-tag { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+    <div id="bpWrapper" class="bp-wrapper">
+        <div class="global-wipe"></div>
+        <div id="mapsContainer" style="display:contents;"></div>
+    </div>
+    <script>
+        (function() {
+            var socket = io();
+            var uid = window.location.pathname.split('/').pop();
+            var MAP_EN = { "Bind": "BIND", "Haven": "HAVEN", "Split": "SPLIT", "Ascent": "ASCENT", "Icebox": "ICEBOX", "Breeze": "BREEZE", "Fracture": "FRACTURE", "Pearl": "PEARL", "Sunset": "SUNSET", "Abyss": "ABYSS", "Lotus": "LOTUS", "Corrode": "CORRODE" };
+            var mapCatalog = new Map();
+            var mapsReady = fetch('/api/maps').then(function(r) { return r.json(); }).then(function(r) {
+                (r.data || []).forEach(function(map) { mapCatalog.set(map.uuid, map); mapCatalog.set(map.name, map); });
+            }).catch(function() {});
+
+            socket.on('connect', function() { if(uid) socket.emit('join_room', uid); });
+            socket.on('init_data', function(d) {
+                if(d.session && d.session.state) {
+                    updateUI(d.session.state);
+                }
+            });
+            socket.on('state_changed', function(s) { updateUI(s); });
+
+            async function updateUI(state) {
+                if (!state || !state.maps) return;
+                document.title = (state.teamA || 'Team A') + ' vs ' + (state.teamB || 'Team B') + '｜Overlay English (US) All at once';
+                await mapsReady;
+
+                await new Promise(r => setTimeout(r, 1000));
+
+                document.documentElement.style.setProperty('--vlr-cyan', state.themeColor || "#d4ff00");
+                var wrapper = document.getElementById('bpWrapper');
+                layoutVetoFlow(wrapper,state);
+                var mapsContainer = document.getElementById('mapsContainer');
+                
+                wrapper.classList.remove('run-wipe', 'show-placeholders', 'headers-down');
+                mapsContainer.innerHTML = ''; 
+
+                var vctLogoUrl = state.vctLogo || "/assets/icon_vct.png";
+
+                var boxElements = state.maps.map(function(m, i) {
+                    var isDecider = (m.action === 'Decider' || m.actor === 'Decider');
+                    var isVeto = (m.action === 'Veto' && !isDecider);
+                    var hasWinner = (m.winner && m.winner !== 'None');
+                    var isNext = (m.isNextMap === true);
+
+                    var box = document.createElement('div');
+                    box.className = 'map-box' + (isVeto ? ' is-veto' : '') + (isNext ? ' is-next' : '');
+                    
+                    var actorName = m.actor === 'Random' ? 'RANDOM' : ((m.actor === 'Team A' ? state.teamA : state.teamB) || (m.actor === 'Team A' ? 'TEAM A' : 'TEAM B'));
+                    var actionName = isVeto ? "VETO MAP" : "SELECT MAP";
+                    if(isDecider) { actorName = "DECIDER"; actionName = "MAP"; }
+
+                    var sidePickerName = m.sideSelector === 'Random' ? 'RANDOM' : (m.sideSelector || 'N/A');
+                    var sideText = m.sideSelection === 'ATTACK' ? 'ATTACK' : (m.sideSelection === 'DEFENSE' ? 'DEFENSE' : 'N/A');
+                    var winLogo = m.winner === 'Team A' ? state.logoA : (m.winner === 'Team B' ? state.logoB : null);
+
+                    var placeholderLogoUrl = vctLogoUrl; 
+                    if (!isDecider) {
+                        if (m.actor === 'Team A' && state.logoA) placeholderLogoUrl = state.logoA;
+                        else if (m.actor === 'Team B' && state.logoB) placeholderLogoUrl = state.logoB;
+                    }
+
+                    var inner = document.createElement('div'); inner.className = 'map-inner';
+                    var placeholder = document.createElement('div'); placeholder.className = 'map-placeholder';
+                    var pIcon = document.createElement('img'); pIcon.src = placeholderLogoUrl; 
+                    placeholder.appendChild(pIcon);
+                    inner.appendChild(placeholder);
+
+                    var revealLayer = document.createElement('div'); revealLayer.className = 'map-reveal-layer';
+                    var img = document.createElement('div'); img.className = 'map-img';
+                    var apiMap = mapCatalog.get(m.mapUuid) || mapCatalog.get(m.mapName);
+                    img.style.backgroundImage = "url('" + (m.mapImage || (apiMap && apiMap.splash) || '') + "')";
+                    revealLayer.appendChild(img);
+
+                    var middle = document.createElement('div'); middle.className = 'middle-content';
+                    var title = document.createElement('div'); title.className = 'map-title'; title.textContent = MAP_EN[m.mapName] || m.mapName;
+                    middle.appendChild(title);
+
+                    if (hasWinner) {
+                        var winGrp = document.createElement('div'); winGrp.className = 'win-info';
+                        if(winLogo) { var logo = document.createElement('img'); logo.className = 'win-logo'; logo.src = winLogo; winGrp.appendChild(logo); }
+                        var scoreVal = document.createElement('div'); scoreVal.textContent = m.score || '0-0'; scoreVal.className = 'win-score';
+                        winGrp.appendChild(scoreVal); middle.appendChild(winGrp);
+                    }
+                    revealLayer.appendChild(middle);
+
+                    var vMask = document.createElement('div'); vMask.className = 'veto-mask';
+                    var vIcon = document.createElement('div'); vIcon.className = 'veto-icon';
+                    vMask.appendChild(vIcon); revealLayer.appendChild(vMask);
+                    inner.appendChild(revealLayer);
+
+                    var header = document.createElement('div'); header.className = 'header-tag';
+                    var hA = document.createElement('div'); hA.style.fontSize = '15px'; hA.style.color = '#fff'; hA.textContent = actorName;
+                    var hB = document.createElement('div'); hB.style.fontSize = '15px'; hB.textContent = actionName;
+                    header.appendChild(hA); header.appendChild(hB);
+                    inner.appendChild(header);
+
+                    var wrap = document.createElement('div'); wrap.className = 'pick-info-wrapper';
+                    var pWipe = document.createElement('div'); pWipe.className = 'pick-wipe';
+                    wrap.appendChild(pWipe);
+
+                    var footer = document.createElement('div'); footer.className = 'pick-info';
+                    var fTop = document.createElement('div'); fTop.className = 'pick-row-top'; fTop.textContent = sidePickerName + ' PICKS';
+                    var fBot = document.createElement('div'); fBot.className = 'pick-row-bottom'; fBot.textContent = sideText;
+                    footer.appendChild(fTop); footer.appendChild(fBot);
+                    wrap.appendChild(footer);
+                    inner.appendChild(wrap);
+
+                    var nTag = document.createElement('div'); nTag.className = 'next-map-tag'; nTag.textContent = 'NEXT MAP';
+                    inner.appendChild(nTag);
+
+                    box.appendChild(inner);
+                    mapsContainer.appendChild(box);
+                    return { el: box, isVeto: isVeto, hasWinner: hasWinner };
+                });
+
+                await new Promise(r => setTimeout(r, 50)); 
+                wrapper.classList.add('run-wipe');
+                
+                await new Promise(r => setTimeout(r, 800)); 
+                wrapper.classList.add('show-placeholders', 'headers-down');
+
+                for (let k = 0; k < boxElements.length; k++) {
+                    boxElements[k].el.classList.add('show-logo');
+                    await new Promise(r => setTimeout(r, 120)); 
+                }
+
+                await new Promise(r => setTimeout(r, 500)); 
+
+                boxElements.forEach(item => {
+                    item.el.classList.add('run-action');
+                    if (item.isVeto) item.el.classList.add('show-veto-mask');
+                    if (item.hasWinner) item.el.classList.add('has-winner');
+                    if (!item.isVeto) item.el.classList.add('show-attacker');
+                });
+
+                await new Promise(r => setTimeout(r, 300));
+                boxElements.forEach(item => item.el.classList.add('reveal-final'));
+            }
+        })();
+    </script>
+</body>
+</html>

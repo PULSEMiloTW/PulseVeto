@@ -1,0 +1,12 @@
+{
+  "name": "PulseVeto",
+  "short_name": "PulseVeto",
+  "description": "適用於《特戰英豪》的電競賽事地圖 Ban/Pick 系統",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090B10",
+  "theme_color": "#5865F2",
+  "icons": [
+    {"src": "/branding/PulseVeto_MainIcon.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

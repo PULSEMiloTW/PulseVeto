@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pulse Studio｜賽事管理區</title>
+  <link rel="icon" type="image/png" href="/assets/icon_favicon.png">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    @font-face{font-family:ReplicaBold;src:url('/assets/fonts/Replica-Bold.ttf') format('truetype');font-weight:bold}
+    :root{--red:#ff4655;--dark:#0f1923;--side:#0b1218;--card:#16212b;--white:#ece8e1;--border:#2f3e4a;--font:ReplicaBold,sans-serif}
+    *{box-sizing:border-box}body{margin:0;font-family:var(--font);background:url('/assets/MapVeto_Background.png') center/cover fixed;color:var(--white);display:flex;height:100vh;overflow:hidden}body:before{content:"";position:fixed;inset:0;background:#000c;z-index:-1}
+    .sidebar{width:320px;background:var(--side);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0}.sidebar-header{padding:0 25px 25px;border-bottom:1px solid var(--border)}.sidebar-logo{width:180px;margin-bottom:10px}.nav-label{padding:18px 25px 8px;font-size:11px;color:#66717b;letter-spacing:1px}.nav-item,.sub-item{display:block;padding:13px 25px;color:#9aa5ad;text-decoration:none;border-left:4px solid transparent}.nav-item.active{color:#fff;background:#ff46551a;border-color:var(--red)}.overlay-menu{margin:0 15px;background:#0004}.overlay-category{padding:14px 20px 7px;color:#fff;font-size:13px;letter-spacing:1.5px;border-bottom:1px solid #ffffff12}.overlay-category:not(:first-child){border-top:1px solid var(--border);margin-top:5px}.sub-item{padding:10px 20px 10px 35px;border-width:2px;font-size:12px}.sub-item:hover{color:var(--red);border-color:var(--red)}
+    .expiry{padding:18px 25px;border-top:1px solid var(--border);margin-top:auto;font-size:12px}.expiry b{display:block;color:var(--red);margin-top:5px}.side-actions{padding:0 25px 20px;display:grid;gap:8px}button{font-family:var(--font);cursor:pointer;border:0}.btn{padding:12px;color:#fff;background:var(--border);font-weight:bold}.btn.sync{background:var(--red);padding:16px}.btn.logout{background:transparent;border:1px solid var(--border)}
+    main{flex:1;padding:40px;overflow:auto}.welcome{font-size:26px;margin-bottom:25px}.card{background:var(--card);border:1px solid var(--border);padding:28px;margin-bottom:25px}.title{font-size:20px;border-left:4px solid var(--red);padding-left:15px;margin-bottom:22px}.two,.logo-teams{display:grid;grid-template-columns:1fr 1fr;gap:18px}.logo-teams{margin-top:18px}.tournament-row{display:grid;grid-template-columns:minmax(0,1fr) 160px;gap:18px;align-items:end;margin-top:18px}.theme-field input{height:58px;padding:0;cursor:pointer}label{display:block;color:#9aa5ad;font-size:12px;margin-bottom:7px}input,select{width:100%;padding:10px;background:var(--dark);border:1px solid var(--border);color:#fff;border-radius:4px;font-family:var(--font)}
+    .logo-field{display:grid;grid-template-columns:1fr 72px;gap:10px;align-items:end}.preview{width:72px;height:58px;background:#080d12;border:1px solid var(--border);display:grid;place-items:center;overflow:hidden}.preview img{max-width:90%;max-height:90%;object-fit:contain}.preview span{color:#56616a;font-size:10px}
+    .map-entry{display:grid;grid-template-columns:38px 1fr 1fr 1.5fr;gap:12px;padding:14px;background:#0003;margin-bottom:10px;align-items:end}.map-number{color:var(--red);font-weight:bold;text-align:center;padding-bottom:11px}.map-picker{width:100%;height:39px;padding:0 11px;display:flex;align-items:center;gap:10px;background:var(--dark);border:1px solid var(--border);color:#fff;text-align:left}.map-picker img{width:52px;height:30px;object-fit:cover}.pick-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr .8fr 120px;gap:12px;align-items:end;background:#080d12;border-top:2px solid var(--red);padding:16px;margin:4px -2px -2px}.pick-fields:before{content:'選用地圖設定';grid-column:1/-1;color:var(--red);font-size:12px;letter-spacing:1.4px}.pick-fields[hidden]{display:none}.next{width:100%;padding:10px;background:transparent;border:1px solid var(--red);color:var(--red)}.next.active{background:var(--red);color:#fff}.notice{position:fixed;right:24px;top:24px;padding:15px 20px;background:#121b24;border-left:4px solid var(--red);box-shadow:0 8px 30px #0008;display:none;z-index:20}.notice.show{display:block}.map-modal{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:#020407dd;padding:35px}.map-modal.open{display:grid}.map-dialog{width:min(1050px,95vw);max-height:88vh;background:#101820;border:1px solid #3a4651;box-shadow:0 25px 90px #000;overflow:hidden}.map-dialog-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border)}.map-dialog-head h2{margin:0;font-size:19px}.map-close{width:38px;height:38px;background:#27333d;color:#fff;font-size:20px}.map-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px;max-height:72vh;overflow:auto}.map-option{position:relative;height:145px;padding:0;overflow:hidden;background:#080d12;border:1px solid #ffffff22;color:#fff;text-align:left}.map-option img{width:100%;height:100%;object-fit:cover;filter:brightness(.55);transition:.25s}.map-option:hover img{filter:brightness(.8);transform:scale(1.04)}.map-option span{position:absolute;left:12px;right:12px;bottom:10px;font-size:14px;text-shadow:0 2px 7px #000}.map-option.selected{border:2px solid var(--red)}
+    @media(max-width:1000px){.sidebar{width:250px}.map-entry,.pick-fields,.two,.logo-teams{grid-template-columns:1fr 1fr}.tournament-row{grid-template-columns:minmax(0,1fr) 130px}.map-number{grid-column:1/-1}.map-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-header"><img src="/assets/PulseStudio_Logo_W.png" class="sidebar-logo"><div id="unitName">驗證中…</div></div>
+    <div class="nav-label">主要控制</div><div class="nav-item active">疊層設定區</div>
+    <div class="nav-label">疊層選單</div><div class="overlay-menu">
+      <div class="overlay-category">English</div>
+      <a id="overlayVctEn" class="sub-item" target="_blank">▶ ENG Original</a>
+      <a id="overlayVctEnI" class="sub-item" target="_blank">▶ ENG Instant</a>
+      <div class="overlay-category">繁體中文</div>
+      <a id="overlayVctTc" class="sub-item" target="_blank">▶ T.Chinese Original</a>
+      <a id="overlayVctTcI" class="sub-item" target="_blank">▶ T.Chinese Instant</a>
+    </div>
+    <div class="expiry">授權金鑰有效期限<b id="expiryDate">Loading…</b></div>
+    <div class="side-actions"><button class="btn" id="refreshBtn">讀取最新設定值</button><button class="btn sync" id="syncBtn">立即同步數據</button><button class="btn logout" id="logoutBtn">登出</button></div>
+  </aside>
+  <main>
+    <div class="welcome" id="welcome">歡迎回來！</div>
+    <section class="card"><div class="title">賽事對戰設定區</div>
+      <div class="two"><div><label>隊伍 A 名稱</label><input id="teamA" maxlength="100"></div><div><label>隊伍 B 名稱</label><input id="teamB" maxlength="100"></div></div>
+      <div class="logo-teams">
+        <div class="logo-field"><div><label>隊伍 A Logo URL</label><input id="logoA"></div><div class="preview"><img id="previewA" hidden><span>預覽</span></div></div>
+        <div class="logo-field"><div><label>隊伍 B Logo URL</label><input id="logoB"></div><div class="preview"><img id="previewB" hidden><span>預覽</span></div></div>
+      </div>
+      <div class="tournament-row">
+        <div class="logo-field"><div><label>賽事 Logo URL</label><input id="vctLogo"></div><div class="preview"><img id="previewVct" hidden><span>預覽</span></div></div>
+        <div class="theme-field"><label>賽事主視覺顏色</label><input type="color" id="themeColor" value="#d4ff00"></div>
+      </div>
+    </section>
+    <section class="card"><div class="title">地圖設定區</div><div id="mapsList"></div></section>
+  </main>
+  <div id="notice" class="notice" role="alert"></div>
+  <div id="mapModal" class="map-modal" role="dialog" aria-modal="true"><div class="map-dialog"><div class="map-dialog-head"><h2>選擇地圖</h2><button id="mapClose" class="map-close" type="button">×</button></div><div id="mapGrid" class="map-grid"></div></div></div>
+<script>
+  const socket=io(),uid=decodeURIComponent(location.pathname.split('/').filter(Boolean).pop());
+  let MAPS=[];
+  const mapsReady=fetch('/api/maps').then(r=>r.json()).then(r=>{if(!r.success)throw new Error(r.message);MAPS=r.data;return MAPS}).catch(error=>{notify(error.message||'地圖池載入失敗');return []});
+  let nextIndex=-1;
+  const el=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function teamName(side){return side==='Team A'?(el('teamA').value.trim()||'隊伍 A'):side==='Team B'?(el('teamB').value.trim()||'隊伍 B'):'決勝圖'}
+  function options(items,selected){return items.map(([v,t])=>{const label=String(t).replace(/^\[(.+)\] \[(.+)\]$/,'$1丨$2');return `<option value="${v}"${v===selected?' selected':''}>${esc(label)}</option>`}).join('')}
+  function renderMaps(saved=[]){nextIndex=saved.findIndex(m=>m.isNextMap===true);el('mapsList').innerHTML=Array.from({length:7},(_,i)=>{const m=saved[i]||{},action=m.action||'Veto',show=action==='Pick',selected=m.mapUuid||MAPS.find(x=>x.name===m.mapName)?.uuid||MAPS[0]?.uuid||'',map=MAPS.find(x=>x.uuid===selected)||MAPS[0]||{};return `<div class="map-entry" data-index="${i}"><div class="map-number">${i+1}</div><div><label>隊伍</label><select class="actor">${options([['Team A',teamName('Team A')],['Team B',teamName('Team B')],['Decider','決勝圖']],m.actor||'Team A')}</select></div><div><label>動作</label><select class="action">${options([['Veto','禁用'],['Pick','選用'],['Decider','決勝局']],action)}</select></div><div><label>地圖</label><input type="hidden" class="map-name" value="${esc(selected)}"><button class="map-picker" type="button"><img src="${esc(map.splash||'')}" alt=""><span>${esc((map.nameZh||'未知地圖')+'丨'+(map.name||''))}</span></button></div><div class="pick-fields"${show?'':' hidden'}><div><label>進攻方</label><select class="atk-side">${options([['Team A',teamName('Team A')],['Team B',teamName('Team B')],['N/A','N/A']],m.atkSide||'Team A')}</select></div><div><label>勝利隊伍</label><select class="winner">${options([['None','未結束'],['Team A',teamName('Team A')],['Team B',teamName('Team B')]],m.winner||'None')}</select></div><div><label>比分</label><input class="score" value="${esc(m.score||'')}" maxlength="20" placeholder="0-0"></div><div><label>標記</label><button class="next${i===nextIndex?' active':''}" type="button">${i===nextIndex?'★ 下張地圖':'設為下張'}</button></div></div></div>`}).join('');}
+  let activeMapRow=null;
+  function closeMapPicker(){el('mapModal').classList.remove('open');activeMapRow=null}
+  function openMapPicker(row){activeMapRow=row;const selected=row.querySelector('.map-name').value;el('mapGrid').innerHTML=MAPS.map(map=>`<button class="map-option${map.uuid===selected?' selected':''}" type="button" data-uuid="${esc(map.uuid)}"><img src="${esc(map.splash)}" alt=""><span>${esc(map.nameZh)}丨${esc(map.name)}</span></button>`).join('');el('mapModal').classList.add('open')}
+  el('mapClose').onclick=closeMapPicker;el('mapModal').addEventListener('click',e=>{if(e.target===el('mapModal'))closeMapPicker()});el('mapGrid').addEventListener('click',e=>{const option=e.target.closest('.map-option');if(!option||!activeMapRow)return;const map=MAPS.find(item=>item.uuid===option.dataset.uuid);if(!map)return;activeMapRow.querySelector('.map-name').value=map.uuid;activeMapRow.querySelector('.map-picker').innerHTML=`<img src="${esc(map.splash)}" alt=""><span>${esc(map.nameZh)}丨${esc(map.name)}</span>`;closeMapPicker()});
+  function refreshTeamLabels(){document.querySelectorAll('.map-entry').forEach(row=>{[['.actor','Team A'],['.actor','Team B'],['.atk-side','Team A'],['.atk-side','Team B'],['.winner','Team A'],['.winner','Team B']].forEach(([s,v])=>{const o=row.querySelector(`${s} option[value="${v}"]`);if(o)o.textContent=teamName(v)})})}
+  el('mapsList').addEventListener('change',e=>{if(e.target.classList.contains('action'))e.target.closest('.map-entry').querySelector('.pick-fields').hidden=e.target.value!=='Pick'});
+  el('mapsList').addEventListener('click',e=>{const picker=e.target.closest('.map-picker');if(picker){openMapPicker(picker.closest('.map-entry'));return}if(!e.target.classList.contains('next'))return;const i=Number(e.target.closest('.map-entry').dataset.index);nextIndex=nextIndex===i?-1:i;document.querySelectorAll('.next').forEach((b,n)=>{b.classList.toggle('active',n===nextIndex);b.textContent=n===nextIndex?'★ 下張地圖':'設為下張'})});
+  ['teamA','teamB'].forEach(id=>el(id).addEventListener('input',refreshTeamLabels));
+  function preview(input,img){const url=el(input).value.trim(),image=el(img),fallback=image.parentElement.querySelector('span');image.hidden=!url;fallback.hidden=!!url;image.src=url;image.onerror=()=>{image.hidden=true;fallback.hidden=false;fallback.textContent='無法載入'}}
+  [['logoA','previewA'],['logoB','previewB'],['vctLogo','previewVct']].forEach(([a,b])=>el(a).addEventListener('input',()=>preview(a,b)));
+  function state(){return{teamA:el('teamA').value.trim(),teamB:el('teamB').value.trim(),logoA:el('logoA').value.trim(),logoB:el('logoB').value.trim(),vctLogo:el('vctLogo').value.trim(),themeColor:el('themeColor').value,maps:[...document.querySelectorAll('.map-entry')].map((r,i)=>{const map=MAPS.find(x=>x.uuid===r.querySelector('.map-name').value)||MAPS[0]||{};return{actor:r.querySelector('.actor').value,action:r.querySelector('.action').value,mapUuid:map.uuid||'',mapName:map.name||'Unknown',mapNameZh:map.nameZh||map.name||'Unknown',mapImage:map.splash||'',atkSide:r.querySelector('.atk-side').value,winner:r.querySelector('.winner').value,score:r.querySelector('.score').value.trim(),isNextMap:i===nextIndex}})}}
+  function notify(msg){el('notice').textContent=msg;el('notice').classList.add('show');setTimeout(()=>el('notice').classList.remove('show'),2500)}
+  function expired(){alert('此賽事階段或授權已過期，請重新登入。');location.replace('/?reason=expired')}
+  el('syncBtn').onclick=()=>socket.emit('update_state',{uid,newState:state()},r=>r?.ok?notify('資料同步成功'):r?.message==='Session expired'?expired():notify('同步失敗，請重新整理後再試'));
+  el('refreshBtn').onclick=()=>socket.emit('join_room',uid,r=>{if(!r?.ok)expired()});el('logoutBtn').onclick=()=>location.replace('/logout');
+  socket.on('connect',()=>socket.emit('join_room',uid,r=>{if(!r?.ok)expired()}));
+  socket.on('init_data',async({session})=>{await mapsReady;el('unitName').textContent=session.name||'賽事單位';el('welcome').textContent=`歡迎回來，${session.name||'使用者'}！`;el('expiryDate').textContent=session.expiry||'—';el('overlayVctEn').href=`/overlay-vct-en/${encodeURIComponent(uid)}`;el('overlayVctEnI').href=`/overlay-vct-en-i/${encodeURIComponent(uid)}`;el('overlayVctTc').href=`/overlay-vct-tc/${encodeURIComponent(uid)}`;el('overlayVctTcI').href=`/overlay-vct-tc-i/${encodeURIComponent(uid)}`;const s=session.state||{};['teamA','teamB','logoA','logoB','vctLogo'].forEach(k=>el(k).value=s[k]||'');el('themeColor').value=s.themeColor||'#d4ff00';renderMaps(s.maps||[]);refreshTeamLabels();[['logoA','previewA'],['logoB','previewB'],['vctLogo','previewVct']].forEach(x=>preview(...x))});
+</script></body></html>

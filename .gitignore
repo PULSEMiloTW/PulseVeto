@@ -1,0 +1,62 @@
+node_modules/
+dist/
+build/
+output/
+tmp/
+.tmp-*/
+.codex-patch-test
+
+# Font binaries require an explicit redistribution review before publishing
+public/assets/fonts/*
+!public/assets/fonts/README.md
+
+.env
+.env.local
+.env.production
+*.log
+server.stdout.log
+server.stderr.log
+
+# Legacy local data (may contain live access keys)
+data/
+db.json
+database.json
+config.yml
+
+# Local SQLite, uploaded media, logs and backups
+storage/database/*
+!storage/database/.gitkeep
+storage/uploads/*
+!storage/uploads/events/
+!storage/uploads/events/.gitkeep
+!storage/uploads/teams/
+!storage/uploads/teams/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+storage/backups/*
+!storage/backups/.gitkeep
+storage/cache/maps/*
+!storage/cache/maps/.gitkeep
+storage/cache/valorant-maps.json
+
+# Cloudflared credentials and machine-local configuration
+cloudflared/*.json
+cloudflared/*.pem
+cloudflared/config.yml
+Cloudflared/*.json
+Cloudflared/*.pem
+Cloudflared/config.yml
+
+# Download this third-party executable separately for each deployment
+tools/cloudflared.exe
+
+# Generated Prisma SQLite files
+*.db
+*.db-shm
+*.db-wal
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

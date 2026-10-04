@@ -1,0 +1,11 @@
+.admin-page{padding:0}
+.admin-window{width:100%;min-height:100vh;margin:0;border:0;border-radius:0;box-shadow:none}
+.account-avatar{overflow:hidden;color:transparent}
+.account-avatar img{width:100%;height:100%;object-fit:cover}
+.sidebar-nav [hidden]{display:none!important}
+
+@media(min-width:851px){
+  .admin-window{height:100vh;min-height:0}
+  .admin-sidebar{min-height:0;overflow-y:auto}
+  .admin-content{min-height:0;overflow-y:auto}
+}

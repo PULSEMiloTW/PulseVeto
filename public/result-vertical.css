@@ -1,0 +1,4 @@
+.result-map-grid{grid-template-columns:repeat(auto-fit,minmax(170px,180px));justify-content:center}.result-map-card{width:100%;height:auto;aspect-ratio:9/16}
+.result-topbar{position:relative;z-index:30;overflow:visible}.result-status-group,.result-language-slot,.result-language-slot .pv-language{z-index:31}.result-language-slot .pv-language-menu{z-index:100}.result-timeout-note{margin-top:auto;padding:7px 9px;border:1px solid #f59e0b55;border-radius:8px;background:#f59e0b12;color:#f7bd50;font-size:11px;line-height:1.45}
+@media(min-width:1180px) and (min-aspect-ratio:16/10){.result-map-grid{grid-template-columns:repeat(auto-fit,minmax(170px,180px));align-content:center;justify-content:center}.result-map-card{width:100%;height:auto;aspect-ratio:9/16}}
+@media(max-width:760px){.result-map-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.result-map-card{width:100%;height:auto;min-height:0;aspect-ratio:9/16}}

@@ -1,0 +1,2 @@
+import {describe,expect,it} from 'vitest';import {metadataHtml,pageMetadata} from '../../src/lib/metadata.js';
+describe('metadata',()=>{it('uses PulseVeto branding, absolute URLs and no secrets',()=>{const h=metadataHtml(pageMetadata());expect(h).toContain('PulseVeto丨Powered by Pulse Studio');expect(h).toContain('適用於《特戰英豪》的電競賽事地圖 Ban/Pick 系統');expect(h).toContain('http://localhost:3000/');expect(h).not.toMatch(/teamKey|password|cookie|sessionToken/i)});it('marks private pages noindex',()=>expect(pageMetadata({noindex:true}).robots).toContain('noindex'))});

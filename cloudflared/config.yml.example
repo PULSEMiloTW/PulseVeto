@@ -1,0 +1,8 @@
+tunnel: YOUR_TUNNEL_ID
+credentials-file: C:\\path\\to\\YOUR_TUNNEL_ID.json
+ingress:
+  - hostname: veto.example.com
+    service: http://localhost:3000
+    originRequest:
+      httpHostHeader: veto.example.com
+  - service: http_status:404

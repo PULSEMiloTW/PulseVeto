@@ -1,0 +1,2 @@
+import fs from 'node:fs/promises';import path from 'node:path';import {prisma} from '../lib/db.js';
+export async function createBackup(label='manual'){const dir=path.resolve('storage/backups');await fs.mkdir(dir,{recursive:true});const safe=label.replace(/[^a-z0-9_-]/gi,'-'),stamp=new Date().toISOString().replace(/[:.]/g,'-'),target=path.join(dir,`map-veto-${safe}-${stamp}.db`);await prisma.$executeRawUnsafe(`VACUUM INTO '${target.replaceAll("'","''")}'`);return target}

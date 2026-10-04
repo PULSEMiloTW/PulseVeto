@@ -1,0 +1,20 @@
+(()=>{
+  const fallbackLogo='/branding/valorant-icon.png';
+  const section=(index,title,description,content)=>`<section class="bp-form-section"><header class="bp-form-section__head"><span class="bp-form-section__index">${index}</span><div><h3>${title}</h3><p>${description}</p></div></header>${content}</section>`;
+  const teamCard=(team)=>`<article class="bp-team-card"><div class="bp-team-card__fields"><label>隊伍 ${team} 名稱<input name="team${team}" required autocomplete="organization" placeholder="輸入隊伍名稱"></label><label>隊伍 ${team} Logo URL<input name="logo${team}" type="url" inputmode="url" placeholder="https://example.com/logo.png" data-logo-input="${team}"><small class="muted">支援 HTTPS 圖片網址，輸入後會立即預覽。</small></label></div><div class="bp-logo-preview"><img src="${fallbackLogo}" alt="隊伍 ${team} Logo 預覽" data-logo-preview="${team}"><span>Logo 預覽</span></div></article>`;
+  const setupLogoPreviews=()=>document.querySelectorAll('[data-logo-input]').forEach(input=>{
+    const preview=document.querySelector(`[data-logo-preview="${input.dataset.logoInput}"]`);
+    const refresh=()=>{const value=input.value.trim();preview.src=value||fallbackLogo;preview.closest('.bp-logo-preview').querySelector('span').textContent=value?'載入 Logo 預覽':'尚未設定 Logo'};
+    input.addEventListener('input',refresh);input.addEventListener('change',refresh);preview.addEventListener('error',()=>{preview.src=fallbackLogo;preview.closest('.bp-logo-preview').querySelector('span').textContent='圖片無法載入'});refresh();
+  });
+  const openStructuredBp=(eventId)=>{
+    const event=context.events.find(item=>item.id===eventId),ttl=event?.defaultKeyTtlMinutes||1440,expires=new Date(Date.now()+ttl*60_000),localExpiry=new Date(expires.getTime()-expires.getTimezoneOffset()*60_000).toISOString().slice(0,16);
+    const basic=section('01','對戰與賽制','設定對戰名稱、系列賽制與隊伍金鑰期限。',`<div class="bp-basic-grid"><input type="hidden" name="eventId" value="${eventId}"><label>對戰名稱<input name="name" required placeholder="例：總決賽－Group Gamma"></label><label>賽制<select name="bestOf" required><option value="1">Bo1｜一局決勝</option><option value="3" selected>Bo3｜三局兩勝</option><option value="5">Bo5｜五局三勝</option></select><small class="muted">系統會自動產生對應的 7 張地圖 Ban/Pick 步驟。</small></label><label>隊伍金鑰到期時間<input name="expires" type="datetime-local" value="${localExpiry}" required><small class="muted">只限制登入，不會讓 BP 自動結束。</small></label></div>`);
+    const teams=section('02','隊伍設定','隊伍名稱與 Logo 會顯示於操作頁、結果頁及 Overlay。',`<div class="bp-team-grid">${teamCard('A')}${teamCard('B')}</div>`);
+    const publishing=section('03','結果與操作規則','BP 結果頁固定開啟，並確認此場 BP 的選邊規則。',`<p class="bp-flow-note">BP 結果頁會在建立後自動開啟且不可關閉。每張 Pick 由對手選邊；Bo1／Bo3 決勝圖由 Team A 選邊，Bo5 決勝圖由 Team B 選邊。Overlay 連結會在建立後提供。</p>`);
+    openForm('建立單場 BP',`<div class="bp-form">${basic}${teams}${publishing}</div>`,async formData=>{const data=await api('/veto-sessions',{method:'POST',body:JSON.stringify({eventId,name:formData.get('name'),bestOf:Number(formData.get('bestOf')),teamAName:formData.get('teamA'),teamALogo:formData.get('logoA'),teamBName:formData.get('teamB'),teamBLogo:formData.get('logoB'),keyExpiresAt:new Date(formData.get('expires')).toISOString(),publicSharingEnabled:true})});showSecrets({'Team A 金鑰':data.teamAKey,'Team B 金鑰':data.teamBKey,'Overlay｜繁體中文':`${location.origin}/overlay-vct-tc/${data.overlayToken}`,'Overlay｜繁體中文（一次顯示）':`${location.origin}/overlay-vct-tc-i/${data.overlayToken}`,'Overlay｜English':`${location.origin}/overlay-vct-en/${data.overlayToken}`,'Overlay｜English（一次顯示）':`${location.origin}/overlay-vct-en-i/${data.overlayToken}`,'BP 結果頁':`${location.origin}/result/${data.resultToken}`})});
+    setupLogoPreviews();
+  };
+  document.head.insertAdjacentHTML('beforeend','<link rel="stylesheet" href="/manage-bp-form.css"><link rel="stylesheet" href="/theme.css?v=20260804-1">');
+  document.addEventListener('click',event=>{const button=event.target.closest?.('[data-new-bp]');if(!button)return;event.preventDefault();event.stopImmediatePropagation();openStructuredBp(button.dataset.newBp)},true);
+})();
