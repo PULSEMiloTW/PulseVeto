@@ -1,6 +1,7 @@
 import {performance} from 'node:perf_hooks';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import http from 'node:http';
 import {env} from '../config/env.js';
 import type {RequestHandler} from 'express';
 import {prisma} from '../lib/db.js';
@@ -32,6 +33,15 @@ export type StatusConfig={version:number;enabled:boolean;notices:Notice[]};
 const configKey='status.config',prefix='status.day.',minuteMs=60_000;
 const probeMarker=crypto.randomUUID();
 const availableComponents=()=>components.filter(c=>c.id==='docs'?fs.existsSync('public/docs.html'):c.id==='hq'?fs.existsSync('src/hq-app.ts')||fs.existsSync('dist/src/hq-app.js'):true);
+export function probeHqGateway(port:number):Promise<boolean>{
+  // Fetch may discard Host overrides; HQ intentionally requires its canonical authority.
+  return new Promise((resolve,reject)=>{
+    const request=http.get({hostname:'localhost',port,path:'/hq',headers:{host:new URL(env.PUBLIC_BASE_URL).host,'x-pulse-status-probe':probeMarker}},response=>{
+      response.resume();resolve(response.statusCode===302&&response.headers.location==='/hq/login');
+    });
+    request.setTimeout(5000,()=>request.destroy(new Error('Probe timeout')));request.on('error',reject);
+  });
+}
 const fresh=():Metric=>({checks:0,ok:0,slow:0,totalMs:0,maxMs:0,requests:0,errors:0,rejected:0,requestMs:0});
 let pending:Partial<Record<ComponentId,Metric>>={};
 export function classify(path:string):ComponentId|undefined{
@@ -112,12 +122,12 @@ export function startStatusMonitor(port:number){
         if(!('probe'in c)&&c.id!=='database')return;
         const m=metrics[c.id]??=fresh(),start=performance.now();let ok=false;
         try{if(c.id==='database'){await prisma.$queryRaw`SELECT 1`;ok=true;}
-          else if('probe'in c){const response=await fetch(`http://localhost:${port}${c.probe}`,{redirect:'manual',signal:AbortSignal.timeout(5000),headers:{'x-pulse-status-probe':probeMarker,...(c.id==='hq'?{host:new URL(env.PUBLIC_BASE_URL).host}:{})}});const body=await response.text();ok=response.status===c.expected;
+          else if(c.id==='hq')ok=await probeHqGateway(port);
+          else if('probe'in c){const response=await fetch(`http://localhost:${port}${c.probe}`,{redirect:'manual',signal:AbortSignal.timeout(5000),headers:{'x-pulse-status-probe':probeMarker}});const body=await response.text();ok=response.status===c.expected;
             if(ok&&c.id==='socket')ok=body.startsWith('0{');
             if(ok&&c.id==='maps'){const value=JSON.parse(body) as {success?:unknown;data?:unknown};ok=value.success===true&&Array.isArray(value.data);}
             if(ok&&c.id==='auth'){const value=JSON.parse(body) as {configured?:unknown};ok=typeof value.configured==='boolean';}
             if(ok&&c.id==='admin')ok=response.headers.get('location')==='/';
-            if(ok&&c.id==='hq')ok=response.headers.get('location')==='/hq/login';
           }
         }catch{ /* Only aggregate availability, never persist response bodies or secrets. */ }
         const elapsed=performance.now()-start;m.checks++;if(ok)m.ok++;if(ok&&elapsed>1500)m.slow++;m.totalMs+=elapsed;m.maxMs=Math.max(m.maxMs,elapsed);
