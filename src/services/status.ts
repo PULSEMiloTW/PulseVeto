@@ -1,6 +1,7 @@
 import {performance} from 'node:perf_hooks';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import {env} from '../config/env.js';
 import type {RequestHandler} from 'express';
 import {prisma} from '../lib/db.js';
 import {logger} from '../lib/logger.js';
@@ -111,7 +112,7 @@ export function startStatusMonitor(port:number){
         if(!('probe'in c)&&c.id!=='database')return;
         const m=metrics[c.id]??=fresh(),start=performance.now();let ok=false;
         try{if(c.id==='database'){await prisma.$queryRaw`SELECT 1`;ok=true;}
-          else if('probe'in c){const response=await fetch(`http://localhost:${port}${c.probe}`,{redirect:'manual',signal:AbortSignal.timeout(5000),headers:{'x-pulse-status-probe':probeMarker}});const body=await response.text();ok=response.status===c.expected;
+          else if('probe'in c){const response=await fetch(`http://localhost:${port}${c.probe}`,{redirect:'manual',signal:AbortSignal.timeout(5000),headers:{'x-pulse-status-probe':probeMarker,...(c.id==='hq'?{host:new URL(env.PUBLIC_BASE_URL).host}:{})}});const body=await response.text();ok=response.status===c.expected;
             if(ok&&c.id==='socket')ok=body.startsWith('0{');
             if(ok&&c.id==='maps'){const value=JSON.parse(body) as {success?:unknown;data?:unknown};ok=value.success===true&&Array.isArray(value.data);}
             if(ok&&c.id==='auth'){const value=JSON.parse(body) as {configured?:unknown};ok=typeof value.configured==='boolean';}
