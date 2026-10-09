@@ -4,7 +4,7 @@
   const pct=v=>v==null?'—':v.toFixed(2)+'%',ms=v=>v==null?'—':Math.round(v)+' ms',date=v=>v?new Date(v).toLocaleString(window.pvI18n.locale):'—';
   function metric(title,value){const node=el('div');node.append(el('span',title),el('b',value));return node;}
   function render(){
-    window.pvStatus.translate();window.pvStatus.preferences();document.title='PulseVeto · '+t('title');
+    window.pvStatus.translate();window.pvStatus.preferences();document.title='PulseVeto Status';
     if(!data){document.getElementById('overall').textContent=t('noData');return;}
     document.getElementById('overall').textContent=t(data.state);document.getElementById('overallDot').className='dot '+data.state;
     document.getElementById('updated').textContent=t('updated')+' · '+date(data.updatedAt);
