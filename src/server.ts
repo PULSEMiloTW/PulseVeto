@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import {statusRouter,statusManageRouter} from './routes/status.js';
+import {observeStatus,startStatusMonitor} from './services/status.js';
 import http from 'node:http';
 import path from 'node:path';
 import fs from 'node:fs';
@@ -31,6 +33,11 @@ app.use(helmet({contentSecurityPolicy:false,crossOriginResourcePolicy:false}));
 app.use(express.json({limit:'64kb'})); app.use(cookieParser());
 app.use((req,res,next)=>{const host=(req.hostname||'').toLowerCase();if(env.NODE_ENV==='production'&&!trustedHosts.has(host))return res.status(421).send('Untrusted host');next();});
 app.use('/api/auth',rateLimit({windowMs:15*60_000,limit:30,skipSuccessfulRequests:true,standardHeaders:true,legacyHeaders:false,handler:(_req,res)=>res.status(429).json({error:'登入嘗試過於頻繁，請稍候 15 分鐘後再試'})}));
+app.use(observeStatus);
+app.use('/status',statusRouter);
+app.use('/api/manage/status',origin,statusManageRouter);
+app.get('/admin/status',async(req,res)=>{if(!await currentAdmin(req))return res.status(403).send('僅限全域管理員');res.set({'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'}).sendFile(path.resolve('public/status-manage.html'));});
+app.get('/status-manage.html',(_req,res)=>res.sendStatus(404));
 app.get(['/manage.html','/team.html','/admin.html','/admin-home.html','/key-admin.html'],(_req,res)=>res.status(404).end());
 app.use(express.static(path.resolve('public'),{index:false}));
 app.use('/uploads',express.static(path.resolve('storage/uploads'),{index:false,fallthrough:false,maxAge:'1h'}));
@@ -176,7 +183,7 @@ if(env.NODE_ENV!=='test'){
   setInterval(()=>void purgeExpiredDeleted().catch(error=>logger.error({category:'RECYCLE_BIN',err:error},'Scheduled recycle bin purge failed')),60*60_000).unref();
   setInterval(()=>void createBackup('scheduled').catch(error=>logger.error({err:error},'Scheduled backup failed')),24*60*60_000).unref();
   setInterval(()=>void sweepExpiredVetoTimers().catch(error=>logger.error({category:'BP_TIMER',err:error},'BP timer sweep failed')),1000).unref();
-  server.listen(env.PORT,()=>logger.info({category:'SYSTEM',port:env.PORT},'Server started'));
+  server.listen(env.PORT,()=>{startStatusMonitor(env.PORT);logger.info({category:'SYSTEM',port:env.PORT},'Server started');});
   for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,async()=>{logger.info({category:'SYSTEM'},'Server stopping');await prisma.$disconnect();server.close(()=>process.exit(0));});
 }
 export {app,server};

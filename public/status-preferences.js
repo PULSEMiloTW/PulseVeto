@@ -1,0 +1,7 @@
+(() => {
+  let theme='light';try{theme=localStorage.getItem('pv_hq_theme')==='dark'?'dark':'light';}catch{}
+  const labels={'zh-TW':['切換為深色','切換為淺色'],'zh-CN':['切换为深色','切换为浅色'],'en-US':['Switch to dark theme','Switch to light theme'],'ja-JP':['ダークに切り替え','ライトに切り替え']};
+  function apply(){document.documentElement.dataset.hqTheme=theme;const button=document.getElementById('statusTheme');if(button){button.textContent=theme==='dark'?'☀':'◐';button.setAttribute('aria-label',(labels[window.pvI18n?.locale]||labels['zh-TW'])[theme==='dark'?1:0]);button.title=button.getAttribute('aria-label');}}
+  function install(){const host=document.querySelector('.pv-language');if(!host)return;document.getElementById('preferences')?.append(host);if(!document.getElementById('statusTheme')){const button=document.createElement('button');button.id='statusTheme';button.type='button';button.className='pv-language-trigger';button.onclick=()=>{theme=theme==='dark'?'light':'dark';try{localStorage.setItem('pv_hq_theme',theme);}catch{}apply();};host.prepend(button);}const language=host.querySelector('.pv-language-trigger:not(#statusTheme)');if(language){language.setAttribute('aria-label',window.pvI18n.t('language'));language.setAttribute('aria-expanded',String(host.querySelector('.pv-language-menu')?.classList.contains('open')));}apply();}
+  apply();document.addEventListener('DOMContentLoaded',install);document.addEventListener('pv:locale',()=>queueMicrotask(install));if(document.readyState!=='loading')install();
+})();
