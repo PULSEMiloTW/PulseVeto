@@ -1,0 +1,7 @@
+.sidebar-status-link{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;border-radius:8px;color:#e9e1ff;font-size:13px;font-weight:600;text-decoration:none}
+.sidebar-status-link:hover{background:#ffffff10;color:#fff}
+.sidebar-status-link:focus-visible{outline:2px solid #a5b4fc;outline-offset:2px}
+.sidebar-status-link svg{width:20px;height:20px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.sidebar-status-link>span:last-child{margin-left:auto}
+.sidebar-status-links{flex-shrink:0;margin-top:auto;padding-top:20px;border-top:1px solid #ffffff20}
+@media(max-width:850px){.sidebar-status-links{grid-column:1/-1;margin-top:0;padding-top:12px}}
