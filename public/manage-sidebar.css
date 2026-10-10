@@ -1,0 +1,25 @@
+/* Keep top-level navigation labels aligned across buttons and disclosure rows. */
+.admin-page .sidebar-brand{padding:0 12px;min-height:40px}
+.admin-page .sidebar-brand img{display:block;width:180px;max-width:100%;height:auto;object-fit:contain}
+.admin-page .sidebar-nav{gap:4px;align-content:start;flex-shrink:0}
+.admin-page .sidebar-nav>button,
+.admin-page .sidebar-nav>.manage-nav-group>summary{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;padding:11px 12px;font-size:13px;line-height:22px;border-radius:8px}
+.admin-page .sidebar-nav .nav-icon{display:none}
+.admin-page .sidebar-nav>button>b,
+.admin-page .sidebar-nav>.manage-nav-group>summary>b{min-width:0;font-size:13px;font-weight:600;line-height:22px}
+.admin-page .sidebar-nav>.manage-nav-group>summary::after{flex:none;width:16px;margin-left:auto;text-align:center;line-height:22px}
+.admin-page .sidebar-nav>.manage-nav-group>summary:hover{background:#ffffff10}
+.admin-page .sidebar-nav>.manage-nav-group>div{padding-left:12px}
+.admin-page .sidebar-help{margin-top:auto}
+.admin-page .sidebar-help+.sidebar-release{margin-top:12px;margin-bottom:10px;flex-shrink:0}
+.admin-page .sidebar-account{grid-template-columns:34px minmax(0,1fr) 32px;gap:10px;padding-right:0;padding-left:12px;flex-shrink:0}
+.admin-page .sidebar-account>button{min-width:32px;min-height:34px}
+@media(max-width:850px){
+  .admin-page .sidebar-nav:not([id]){display:grid;grid-template-columns:1fr;width:100%;overflow:visible}
+  .admin-page .sidebar-nav:not([id])>button{width:100%;white-space:normal}
+  .admin-page:has(.sidebar-nav) .sidebar-brand{padding:0}
+  .admin-page .sidebar-brand img{width:160px}
+  .admin-page .sidebar-help{margin-top:0}
+  .admin-page:has(.sidebar-nav) .sidebar-release{margin:0}
+  .admin-page:has(.sidebar-nav) .sidebar-account{padding:0;grid-template-columns:auto}
+}
