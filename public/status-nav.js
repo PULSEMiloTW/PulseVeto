@@ -10,7 +10,9 @@
   const updatePublic=()=>{const [label,description]=publicLabels[window.pvI18n?.locale]||publicLabels['zh-TW'];text.textContent=label;publicLink.setAttribute('aria-label',description);publicLink.title=description;};updatePublic();document.addEventListener('pv:locale',updatePublic);
   if(location.pathname!=='/admin')return;
   const button=document.createElement('button');button.type='button';button.id='navStatus';button.hidden=true;
+  const icon=document.createElement('span');icon.className='nav-icon';icon.setAttribute('aria-hidden','true');icon.textContent='◉';
+  const label=document.createElement('b');button.append(icon,label);
   button.onclick=()=>location.assign('/admin/status');document.querySelector('.sidebar-nav')?.append(button);
-  const update=()=>{button.textContent='◉ '+(labels[window.pvI18n?.locale]||labels['zh-TW']);};update();document.addEventListener('pv:locale',update);
+  const update=()=>{label.textContent=labels[window.pvI18n?.locale]||labels['zh-TW'];};update();document.addEventListener('pv:locale',update);
   fetch('/api/manage/status').then(r=>{button.hidden=!r.ok;}).catch(()=>{});
 })();

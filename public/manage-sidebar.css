@@ -4,7 +4,7 @@
 .admin-page .sidebar-nav{gap:4px;align-content:start;flex-shrink:0}
 .admin-page .sidebar-nav>button,
 .admin-page .sidebar-nav>.manage-nav-group>summary{display:flex;align-items:center;gap:10px;min-height:44px;margin:0;padding:11px 12px;font-size:13px;line-height:22px;border-radius:8px}
-.admin-page .sidebar-nav .nav-icon{display:none}
+.admin-page #manageNavigation .nav-icon{display:none}
 .admin-page .sidebar-nav>button>b,
 .admin-page .sidebar-nav>.manage-nav-group>summary>b{min-width:0;font-size:13px;font-weight:600;line-height:22px}
 .admin-page .sidebar-nav>.manage-nav-group>summary::after{flex:none;width:16px;margin-left:auto;text-align:center;line-height:22px}
