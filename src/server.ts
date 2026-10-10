@@ -186,4 +186,4 @@ if(env.NODE_ENV!=='test'){
   server.listen(env.PORT,()=>{startStatusMonitor(env.PORT);logger.info({category:'SYSTEM',port:env.PORT},'Server started');});
   for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,async()=>{logger.info({category:'SYSTEM'},'Server stopping');await prisma.$disconnect();server.close(()=>process.exit(0));});
 }
-export {app,server};
+export {app,server,io,sweepExpiredVetoTimers};
