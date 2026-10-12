@@ -1,0 +1,21 @@
+:root{font-family:"Segoe UI","Microsoft JhengHei",sans-serif;color:#fff;--ban:#ff5268;--pick:#50dfba;--decider:#b59aff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+#stage{position:absolute;width:1920px;height:1080px;transform-origin:top left}
+.broadcast{position:absolute;left:240px;bottom:72px;width:1440px}
+header{display:flex;align-items:center;gap:24px;height:58px;padding:0 24px;background:#101521;border-left:4px solid #7771ff}
+#event{font-size:17px;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c4ccdc}
+#teams{font-size:24px;font-weight:800;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#status{font-size:16px;color:#c4ccdc}#cards{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:8px}
+.card{position:relative;height:246px;overflow:hidden;background:#161e2c;border-bottom:4px solid #526078;isolation:isolate}
+.card img{position:absolute;width:100%;height:100%;object-fit:cover;z-index:-2}
+.card:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#080c1630,#080c1620 30%,#080c16 88%);z-index:-1}
+.card.ban{border-color:var(--ban)}.card.ban img{filter:grayscale(1);opacity:.46}.card.pick{border-color:var(--pick)}.card.decider{border-color:var(--decider)}
+.number{position:absolute;left:14px;top:12px;font-size:16px;color:#d7dfed;font-weight:700}
+.action{position:absolute;right:12px;top:12px;font-size:14px;font-weight:800;padding:5px 8px;background:#283448}
+.ban .action{background:var(--ban);color:#18070c}.pick .action{background:var(--pick);color:#041912}.decider .action{background:var(--decider);color:#130923}
+.details{position:absolute;bottom:14px;left:16px;right:12px}.map{font-size:28px;font-weight:900;letter-spacing:-.6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actor{font-size:15px;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d3dbea}.side{font-size:13px;color:#a9b6cb;margin-top:5px;min-height:18px}
+footer{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;letter-spacing:1px;color:#ccd4e2}footer span{background:#101521;padding:8px 12px}
+.enter{animation:reveal .52s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--delay,0s)}
+@keyframes reveal{from{opacity:0;transform:translateY(24px);clip-path:inset(100% 0 0)}to{opacity:1;transform:translateY(0);clip-path:inset(0)}}
+@media(prefers-reduced-motion:reduce){.enter{animation:none}}
